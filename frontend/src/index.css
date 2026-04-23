@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #030712;
+  --color-surface: #111827;
+  --color-border: #1f2937;
+  --color-accent: #facc15;
+  --color-muted: #6b7280;
+
+  --color-node-person: #facc15;
+  --color-node-organization: #60a5fa;
+  --color-node-location: #34d399;
+  --color-node-financial: #f87171;
+  --color-node-date: #a78bfa;
+  --color-node-event: #fb923c;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #f9fafb;
+}
+
+/* Custom Scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-background); 
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted); 
+}

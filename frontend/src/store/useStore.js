@@ -1,0 +1,88 @@
+import { create } from 'zustand';
+import api from '../lib/api';
+
+const useStore = create((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+
+  projects: [],
+  setProjects: (projects) => set({ projects }),
+  fetchProjects: async () => {
+    try {
+      const res = await api.get('/api/projects');
+      set({ projects: res.data });
+    } catch (err) {
+      console.error('fetchProjects failed:', err);
+    }
+  },
+
+  activeProject: null,
+  setActiveProject: (project) => set({ activeProject: project }),
+
+  graphData: { nodes: [], links: [] },
+  setGraphData: (data) => set({ graphData: data }),
+  addNode: (node) => set((state) => {
+    const exists = state.graphData.nodes.find(n => n.id === node.id);
+    if (exists) return state;
+    return { graphData: { ...state.graphData, nodes: [...state.graphData.nodes, node] } };
+  }),
+  addEdge: (edge) => set((state) => {
+    // Basic deduplication
+    const exists = state.graphData.links.find(e => 
+      e.source === edge.source && e.target === edge.target && e.label === edge.label
+    );
+    if (exists) return state;
+    return { graphData: { ...state.graphData, links: [...state.graphData.links, edge] } };
+  }),
+
+  agentMessages: [],
+  addAgentMessage: (msg) => set((state) => ({ 
+    agentMessages: [...state.agentMessages, msg] 
+  })),
+  clearAgentMessages: () => set({ agentMessages: [] }),
+
+  pipelineProgress: 0,
+  setPipelineProgress: (val) => set({ pipelineProgress: val }),
+
+  currentStage: null,
+  setCurrentStage: (stage) => set({ currentStage: stage }),
+
+  activeTab: 'graph',
+  setActiveTab: (tab) => set({ activeTab: tab }),
+
+  chatHistory: {},
+  addChatMessage: (projectId, message) => set((state) => ({
+    chatHistory: {
+      ...state.chatHistory,
+      [projectId]: [
+        ...(state.chatHistory[projectId] || []),
+        message
+      ]
+    }
+  })),
+
+  updateLastMessage: (projectId, content) => set((state) => {
+    const history = state.chatHistory[projectId] || [];
+    if (history.length === 0) return state;
+    const updated = [...history];
+    updated[updated.length - 1] = {
+      ...updated[updated.length - 1],
+      content
+    };
+    return {
+      chatHistory: {
+        ...state.chatHistory,
+        [projectId]: updated
+      }
+    };
+  }),
+
+  clearChatHistory: (projectId) => set((state) => ({
+    chatHistory: {
+      ...state.chatHistory,
+      [projectId]: []
+    }
+  }))
+}));
+
+export default useStore;
