@@ -22,12 +22,14 @@ export default function GraphCanvas() {
   const containerRef = useRef();
 
   const [selectedNode, setSelectedNode] = useState(null);
+  const initialZoomDone = useRef(false);
 
   // On mount and project change, try to pre-fetch existing graph data from DB if available
   useEffect(() => {
     if (!activeProject?.id) return;
     
     // Clear graph when switching projects
+    initialZoomDone.current = false;
     setGraphData({ nodes: [], links: [] });
 
     // Fetch the project status first
@@ -111,7 +113,12 @@ export default function GraphCanvas() {
           d3AlphaDecay={0.01}
           d3VelocityDecay={0.2}
           warmupTicks={30}
-          onEngineStop={() => graphRef.current?.zoomToFit(600, 80)}
+          onEngineStop={() => {
+            if (!initialZoomDone.current) {
+              graphRef.current?.zoomToFit(600, 80);
+              initialZoomDone.current = true;
+            }
+          }}
           nodeLabel="name"
           nodeColor={node => COLORS[node.type] || '#ffffff'}
           nodeRelSize={6}
@@ -121,6 +128,41 @@ export default function GraphCanvas() {
           linkDirectionalArrowLength={6}
           linkDirectionalArrowRelPos={0.85}
           linkDirectionalArrowColor={() => 'rgba(255,255,255,0.4)'}
+          linkCanvasObjectMode={() => 'after'}
+          linkCanvasObject={(link, ctx) => {
+            const label = link.label || link.relation_label;
+            if (!label) return;
+            const start = link.source;
+            const end = link.target;
+            if (typeof start !== 'object' || typeof end !== 'object') return;
+            
+            const textPos = {
+              x: start.x + (end.x - start.x) / 2,
+              y: start.y + (end.y - start.y) / 2
+            };
+            
+            const relLink = { x: end.x - start.x, y: end.y - start.y };
+            let textAngle = Math.atan2(relLink.y, relLink.x);
+            if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
+            if (textAngle < -Math.PI / 2) textAngle = -(Math.PI + textAngle);
+            
+            const fontSize = 10;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.save();
+            ctx.translate(textPos.x, textPos.y);
+            ctx.rotate(textAngle);
+            
+            // Background to make text readable over lines
+            const textWidth = ctx.measureText(label).width;
+            ctx.fillStyle = 'rgba(3, 7, 18, 0.8)';
+            ctx.fillRect(-textWidth / 2 - 2, -fontSize / 2 - 2, textWidth + 4, fontSize + 4);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+          }}
           onNodeClick={(node) => {
             // Pin ALL nodes in place before zooming
             // so physics doesnt push them around
@@ -147,17 +189,18 @@ export default function GraphCanvas() {
           nodePointerAreaPaint={(node, color, ctx) => {
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, 12, 0, 2 * Math.PI);
+            const radius = node.val ? 10 + (node.val * 3) : 10;
+            ctx.arc(node.x, node.y, radius + 4, 0, 2 * Math.PI);
             ctx.fill();
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
-            // Fixed pixel radius — never scales with zoom
-            const radius = node.val ? 8 + (node.val * 4) : 8;
+            // Node radius that scales naturally with zoom
+            const radius = node.val ? 10 + (node.val * 3) : 10;
 
             // Glow effect for high suspicion nodes
             if ((node.suspicion_score || 0) > 6) {
               ctx.beginPath();
-              ctx.arc(node.x, node.y, radius + 4, 0, 2 * Math.PI);
+              ctx.arc(node.x, node.y, radius + 6, 0, 2 * Math.PI);
               ctx.fillStyle = 'rgba(248, 113, 113, 0.2)';
               ctx.fill();
             }
@@ -173,14 +216,14 @@ export default function GraphCanvas() {
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Label — fixed readable size regardless of zoom
+            // Label — Fixed internal size so it scales properly alongside the node
             const label = node.name || '';
-            const fontSize = 12 / globalScale;
-            ctx.font = `bold ${Math.max(fontSize, 2)}px Sans-Serif`;
+            const fontSize = 12;
+            ctx.font = `bold ${fontSize}px Sans-Serif`;
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            ctx.fillText(label, node.x, node.y + radius + 3);
+            ctx.fillText(label, node.x, node.y + radius + 4);
           }}
         />
       )}
