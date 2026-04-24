@@ -30,7 +30,7 @@ export default function Login() {
           <Search className="text-accent" size={24} />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">
-          Nexora
+          Nexora AI
         </h1>
       </div>
 

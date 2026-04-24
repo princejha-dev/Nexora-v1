@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Verify Google embedding config on startup."""
-    logger.info("Starting Nexora...")
+    logger.info("Starting Nexora AI...")
     from core.embedder import get_model_name, get_embedding_dimension
     logger.info(f"Embedding ready: {get_model_name()} (dim={get_embedding_dimension()})")
     yield
-    logger.info("Shutting down Nexora...")
+    logger.info("Shutting down Nexora AI...")
 
 
 app = FastAPI(
-    title="Nexora",
-    description="Backend API for Nexora.",
+    title="Nexora AI",
+    description="Backend API for Nexora AI.",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -36,7 +36,7 @@ app = FastAPI(
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],  # TEMPORARY: Allow all origins during development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

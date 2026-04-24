@@ -56,7 +56,7 @@ export default function Dashboard() {
           <div className="flex-1 min-w-0 overflow-hidden bg-background relative h-full">
             {!activeProject ? (
               <div className="h-full flex flex-col items-center justify-center text-muted">
-                <p>Welcome to Nexora.</p>
+                <p>Welcome to Nexora AI.</p>
                 <button 
                   onClick={() => setIsUploadOpen(true)}
                   className="mt-4 px-6 py-2 bg-white/5 border border-border rounded-lg text-white hover:bg-white/10 transition-colors"

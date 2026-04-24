@@ -46,7 +46,7 @@ export default function Sidebar({ onNewProject }) {
           <Search className="text-accent" size={16} />
         </div>
         <span className="text-xl font-bold tracking-tight text-white">
-          Nexora
+          Nexora AI
         </span>
       </div>
 
