@@ -1,16 +1,35 @@
-# React + Vite
+# 🎨 Nexora — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Nexora frontend is a high-performance React application designed for investigative journalists to visualize and interact with complex document networks.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: React 18 (Vite)
+- **State Management**: Zustand (with persistent project caching)
+- **Visualization**: `react-force-graph-2d` (Custom Canvas Rendering)
+- **Styling**: Tailwind CSS
+- **Real-time**: Server-Sent Events (SSE) for live telemetry and graph construction.
 
-## React Compiler
+## 🌟 Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Dynamic Knowledge Graph**: Interactive nodes and links with physics-based layout.
+- **Investigative Chat**: A dedicated panel for querying the investigation using RAG.
+- **Findings Dashboard**: View automatically detected anomalies with suspicion scores.
+- **Live Terminal**: A side-panel that shows real-time logs from the AI agent pipeline.
 
-## Expanding the ESLint configuration
+## 🛠️ Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Environment Variables
+Create a `.env` file:
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+## 🏗️ Architecture Note
+The frontend uses a **Zustand** store (`src/store/useStore.js`) as the central source of truth. When the AI backend extracts entities, they are streamed via SSE and added to the store in real-time, causing the graph to "grow" dynamically before the user's eyes.

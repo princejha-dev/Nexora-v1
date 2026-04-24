@@ -4,6 +4,17 @@
 
 ---
 
+## 🔗 Live Demo & Links
+- **Deployed URL**: [https://nexora-ai-theta-snowy.vercel.app/](https://nexora-ai-theta-snowy.vercel.app/)
+- **Demo Video**: [Watch Demo](https://youtu.be/your-demo-link-here) *(Optional)*
+- **Documentation**: 
+  - [Backend Docs](backend/README.md)
+  - [Frontend Docs](frontend/README.md)
+  - [Agent Pipeline Architecture](backend/agents/README.md)
+  - [Setup Guide](backend/SETUP_GUIDE.md)
+
+---
+
 ## 🌟 Key Features
 
 - **Live Multi-Agent Pipeline**: Watch AI agents process documents in real-time (Ingestion → Embedding → Extraction → Pattern Analysis → Fact-checking).
@@ -24,6 +35,36 @@
 
 ---
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    User((Journalist)) -->|Uploads Documents| FE[React Frontend]
+    FE -->|API Call| BE[FastAPI Backend]
+    
+    subgraph "Orchestration Pipeline"
+        BE -->|Start| ORCH[Orchestrator]
+        ORCH -->|1. Ingest| AG1[Ingestion Agent]
+        ORCH -->|2. Embed| EMB[Gemini Embedder]
+        ORCH -->|3. Extract| AG2[Entity Agent]
+        ORCH -->|4. Detect| AG3[Pattern Agent]
+        ORCH -->|5. Verify| AG4[Factcheck Agent]
+        ORCH -->|6. Draft| AG5[Narrative Agent]
+    end
+    
+    EMB -->|Vectors| DB[(Supabase pgvector)]
+    AG2 -->|Nodes/Edges| DB
+    AG3 -->|Anomalies| DB
+    
+    ORCH -->|Live Events| SSE[Server-Sent Events]
+    SSE -->|Real-time Updates| FE
+    
+    FE <-->|Chat Context| CHAT[RAG Chat Agent]
+    CHAT <-->|Semantic Search| DB
+```
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
@@ -31,58 +72,10 @@
 - Node.js 18+
 - Supabase account
 - Groq API Key
-- Google AI API Key (for Gemini)
+- Google AI API Key (for Gemini Embeddings)
 
-### 2. Backend Setup
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-```
-Create a `.env` file in the `backend` folder:
-```env
-SUPABASE_URL=your_url
-SUPABASE_KEY=your_key
-GROQ_API_KEY=your_groq_key
-GOOGLE_API_KEY=your_google_key
-JWT_SECRET=your_secret
-```
-Run the server:
-```bash
-uvicorn main:app --reload
-```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
-```
-Create a `.env` file in the `frontend` folder:
-```env
-VITE_API_URL=http://localhost:8000
-```
-Run the development server:
-```bash
-npm run dev
-```
-
----
-
-## 📦 Deployment
-
-### Backend (Render)
-1. Create a new **Web Service** on Render.
-2. Connect your GitHub repository.
-3. Set the build command to: `pip install -r requirements.txt` (or use the provided `Dockerfile`).
-4. Set the start command to: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
-5. Add all environment variables from your `.env`.
-
-### Frontend (Vercel)
-1. Import your project into Vercel.
-2. Set the framework to **Vite**.
-3. Set the **Root Directory** to `frontend`.
-4. Add the `VITE_API_URL` environment variable pointing to your Render backend URL.
+### 2. Setup Guide
+For detailed instructions on setting up your local environment, database schema, and environment variables, please refer to the **[Backend Setup Guide](backend/SETUP_GUIDE.md)**.
 
 ---
 
