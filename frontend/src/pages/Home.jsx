@@ -75,7 +75,7 @@ export default function Home() {
       <footer className="border-t border-border py-12 text-center text-muted">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Cpu size={20} className="text-accent" />
-          <span className="font-semibold text-white">InvestiGraph AI</span>
+          <span className="font-semibold text-white">Nexora</span>
         </div>
         <p>Built with FastAPI, LangChain, React, and Supabase.</p>
       </footer>

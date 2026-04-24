@@ -58,9 +58,13 @@ export default function useSSE(projectId) {
         }
 
         switch (event.event) {
-          case 'stage':
-            setCurrentStage(msg.stage);
-            setPipelineProgress(msg.progress);
+          case 'progress':
+            if (msg.percent !== undefined) setPipelineProgress(msg.percent);
+            break;
+            
+          case 'status':
+            if (msg.stage) setCurrentStage(msg.stage);
+            if (msg.message) addAgentMessage({ agent: 'system', message: msg.message, timestamp: new Date() });
             break;
             
           case 'message':
@@ -96,12 +100,20 @@ export default function useSSE(projectId) {
             });
             break;
 
-          case 'update':
-            if (msg.status === 'complete') {
-              fetchProjects(); // refresh projects to show complete state
-              setCurrentStage('Verification Complete');
-              setPipelineProgress(100);
-            }
+          case 'complete':
+            fetchProjects(); // refresh projects to show complete state
+            setCurrentStage('Verification Complete');
+            setPipelineProgress(100);
+            if (msg.message) addAgentMessage({ agent: 'system', message: msg.message, timestamp: new Date() });
+            break;
+
+          case 'error':
+            addAgentMessage({ 
+              agent: 'system', 
+              message: `ERROR: ${msg.message}`, 
+              isAlert: true,
+              timestamp: new Date()
+            });
             break;
 
           case 'ping':

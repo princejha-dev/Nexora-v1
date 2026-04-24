@@ -15,7 +15,7 @@ export default function Navbar() {
               <Search className="text-accent" size={18} />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              InvestiGraph <span className="text-accent">AI</span>
+              Nexora
             </span>
           </Link>
           

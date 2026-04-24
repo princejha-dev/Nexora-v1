@@ -33,7 +33,7 @@ export default function Signup() {
           <Search className="text-accent" size={24} />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">
-          InvestiGraph <span className="text-accent">AI</span>
+          Nexora
         </h1>
       </div>
 

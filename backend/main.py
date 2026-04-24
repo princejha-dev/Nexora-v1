@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Verify Google embedding config on startup."""
-    logger.info("Starting InvestiGraph AI...")
+    logger.info("Starting Nexora...")
     from core.embedder import get_model_name, get_embedding_dimension
     logger.info(f"Embedding ready: {get_model_name()} (dim={get_embedding_dimension()})")
     yield
-    logger.info("Shutting down InvestiGraph AI...")
+    logger.info("Shutting down Nexora...")
 
 
 app = FastAPI(
-    title="InvestiGraph AI",
-    description="AI-powered investigative journalism platform",
+    title="Nexora",
+    description="Backend API for Nexora.",
     version="1.0.0",
     lifespan=lifespan,
 )
