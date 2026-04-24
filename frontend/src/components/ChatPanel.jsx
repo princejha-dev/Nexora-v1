@@ -56,22 +56,27 @@ export default function ChatPanel() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       
+      let firstChunkReceived = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        
+        if (!firstChunkReceived) {
+          firstChunkReceived = true;
+          setLoading(false);
+        }
         
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim();
-            if (data === '[DONE]') break;
-            if (data) {
-              // Append each chunk to last message
-              currentResponse += data;
-              updateLastMessage(activeProject.id, currentResponse);
-            }
+            const data = line.substring(6);
+            if (data.trim() === '[DONE]') break;
+            
+            // Append each chunk to last message
+            currentResponse += data;
+            updateLastMessage(activeProject.id, currentResponse);
           }
         }
       }
@@ -99,7 +104,10 @@ export default function ChatPanel() {
             <p className="text-sm">Ask me to summarize documents, find specific transactions, or search for entities.</p>
           </div>
         ) : (
-          messages.map((msg, i) => (
+          messages.map((msg, i) => {
+            if (msg.role === 'ai' && !msg.content) return null;
+            
+            return (
             <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               
               {msg.role === 'ai' && (
@@ -111,7 +119,7 @@ export default function ChatPanel() {
               <div className={`px-5 py-3.5 rounded-2xl max-w-[85%] shadow-sm ${
                 msg.role === 'user' 
                   ? 'bg-accent text-black font-medium leading-relaxed' 
-                  : 'bg-surface border border-border text-gray-200'
+                  : 'bg-surface border border-border text-gray-200 break-words'
               }`}>
                 {msg.role === 'ai' ? (
                   <div className="text-sm leading-relaxed space-y-2">
@@ -125,15 +133,17 @@ export default function ChatPanel() {
                         if (line.trim().startsWith('- ')) return (
                           <div key={i} className="flex gap-2">
                             <span className="text-yellow-400 mt-0.5">•</span>
-                            <span>{line.trim().slice(2)}</span>
+                            <span className="break-words">{line.trim().slice(2)}</span>
                           </div>
                         );
-                        return <p key={i}>{line}</p>;
+                        return <p key={i} className="break-words">{line}</p>;
                       })
                     }
                   </div>
                 ) : (
-                  msg.content
+                  <div className="break-words">
+                    {msg.content}
+                  </div>
                 )}
               </div>
 
@@ -143,7 +153,8 @@ export default function ChatPanel() {
                 </div>
               )}
             </div>
-          ))
+            );
+          })
         )}
         
         {loading && (
