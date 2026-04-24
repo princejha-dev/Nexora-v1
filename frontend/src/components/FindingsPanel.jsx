@@ -5,14 +5,22 @@ import { FileText, Loader2, RefreshCw, TriangleAlert, ShieldAlert, BadgeInfo } f
 
 export default function FindingsPanel() {
   const activeProject = useStore((state) => state.activeProject);
-  const [findings, setFindings] = useState([]);
-  const [narrative, setNarrative] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const projectFindings = useStore((state) => state.projectFindings);
+  const setProjectFindings = useStore((state) => state.setProjectFindings);
+  const projectNarratives = useStore((state) => state.projectNarratives);
+  const setProjectNarrative = useStore((state) => state.setProjectNarrative);
+
+  const findings = activeProject ? (projectFindings[activeProject.id] || []) : [];
+  const narrative = activeProject ? projectNarratives[activeProject.id] : null;
+
+  const [loading, setLoading] = useState(false);
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (activeProject) fetchData();
+    if (activeProject && !projectFindings[activeProject.id]) {
+      fetchData();
+    }
   }, [activeProject]);
 
   const fetchData = async () => {
@@ -22,7 +30,7 @@ export default function FindingsPanel() {
         api.get(`/api/projects/${activeProject.id}/findings`),
         api.get(`/api/projects/${activeProject.id}`)
       ]);
-      setFindings(findRes.data);
+      setProjectFindings(activeProject.id, findRes.data);
       // Backend should store narrative in project record or findings table. Right now, narrative is generated on demand.
     } catch (err) {
       console.error(err);
@@ -36,7 +44,7 @@ export default function FindingsPanel() {
     setGeneratingDraft(true);
     try {
       const { data } = await api.post(`/api/agents/narrative/${activeProject.id}`);
-      setNarrative(data.draft);
+      setProjectNarrative(activeProject.id, data.draft);
     } catch (err) {
       setError("Failed to generate narrative draft.");
     } finally {

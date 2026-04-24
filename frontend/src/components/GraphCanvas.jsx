@@ -85,10 +85,10 @@ export default function GraphCanvas() {
   // Stronger repulsion so nodes spread out more
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.d3Force('charge').strength(-500);
-      graphRef.current.d3Force('link').distance(150);
+      graphRef.current.d3Force('charge').strength(-150);
+      graphRef.current.d3Force('link').distance(100);
       // Center force keeps graph anchored to middle
-      graphRef.current.d3Force('center')?.strength(0.3);
+      graphRef.current.d3Force('center')?.strength(0.5);
     }
   }, [graphData.nodes.length]);
 
@@ -128,41 +128,6 @@ export default function GraphCanvas() {
           linkDirectionalArrowLength={6}
           linkDirectionalArrowRelPos={0.85}
           linkDirectionalArrowColor={() => 'rgba(255,255,255,0.4)'}
-          linkCanvasObjectMode={() => 'after'}
-          linkCanvasObject={(link, ctx) => {
-            const label = link.label || link.relation_label;
-            if (!label) return;
-            const start = link.source;
-            const end = link.target;
-            if (typeof start !== 'object' || typeof end !== 'object') return;
-            
-            const textPos = {
-              x: start.x + (end.x - start.x) / 2,
-              y: start.y + (end.y - start.y) / 2
-            };
-            
-            const relLink = { x: end.x - start.x, y: end.y - start.y };
-            let textAngle = Math.atan2(relLink.y, relLink.x);
-            if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
-            if (textAngle < -Math.PI / 2) textAngle = -(Math.PI + textAngle);
-            
-            const fontSize = 10;
-            ctx.font = `${fontSize}px Sans-Serif`;
-            ctx.save();
-            ctx.translate(textPos.x, textPos.y);
-            ctx.rotate(textAngle);
-            
-            // Background to make text readable over lines
-            const textWidth = ctx.measureText(label).width;
-            ctx.fillStyle = 'rgba(3, 7, 18, 0.8)';
-            ctx.fillRect(-textWidth / 2 - 2, -fontSize / 2 - 2, textWidth + 4, fontSize + 4);
-            
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.fillText(label, 0, 0);
-            ctx.restore();
-          }}
           onNodeClick={(node) => {
             // Pin ALL nodes in place before zooming
             // so physics doesnt push them around
@@ -251,19 +216,9 @@ export default function GraphCanvas() {
           <h3 className="text-white font-bold text-sm mb-1">
             {selectedNode.name}
           </h3>
-          <p className="text-gray-400 text-xs mb-3">
+          <p className="text-gray-400 text-xs mb-1">
             {selectedNode.description || 'No description available'}
           </p>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Suspicion Score</span>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-              selectedNode.suspicion_score > 6 ? 'bg-red-900 text-red-300' : 
-              selectedNode.suspicion_score > 3 ? 'bg-yellow-900 text-yellow-300' : 
-              'bg-gray-700 text-gray-300'
-            }`}>
-              {selectedNode.suspicion_score || 0}/10
-            </span>
-          </div>
         </div>
       )}
     </div>

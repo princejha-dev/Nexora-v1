@@ -82,6 +82,16 @@ const useStore = create((set) => ({
       ...state.chatHistory,
       [projectId]: []
     }
+  })),
+
+  projectFindings: {},
+  setProjectFindings: (projectId, findings) => set((state) => ({
+    projectFindings: { ...state.projectFindings, [projectId]: findings }
+  })),
+
+  projectNarratives: {},
+  setProjectNarrative: (projectId, narrative) => set((state) => ({
+    projectNarratives: { ...state.projectNarratives, [projectId]: narrative }
   }))
 }));
 
