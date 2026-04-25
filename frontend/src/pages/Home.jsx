@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import DemoGraph from '../components/DemoGraph';
 import { Upload, Network, ShieldAlert, Cpu } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-8">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-            Powered by 5 LangChain AI Agents
+            Powered by 6 LangChain AI Agents
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6">
@@ -26,9 +26,9 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/signup" className="px-8 py-4 w-full sm:w-auto text-base font-bold text-black bg-accent hover:bg-yellow-500 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.3)] transition-all">
+            <Link to="/signup" className="px-8 py-4 w-full sm:w-auto text-base font-bold text-black bg-accent hover:bg-yellow-500 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.3)] transition-all">
               Start Investigating Free
-            </a>
+            </Link>
             <a href="#how-it-works" className="px-8 py-4 w-full sm:w-auto text-base font-bold text-white bg-surface hover:bg-border border border-border rounded-xl transition-all">
               See How It Works
             </a>
