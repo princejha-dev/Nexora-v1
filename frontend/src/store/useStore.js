@@ -1,7 +1,10 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import api from '../lib/api';
 
-const useStore = create((set) => ({
+const useStore = create(
+  persist(
+    (set, get) => ({
   user: null,
   setUser: (user) => set({ user }),
 
@@ -35,17 +38,27 @@ const useStore = create((set) => ({
     return { graphData: { ...state.graphData, links: [...state.graphData.links, edge] } };
   }),
 
-  agentMessages: [],
-  addAgentMessage: (msg) => set((state) => ({ 
-    agentMessages: [...state.agentMessages, msg] 
+  agentMessages: {}, // Map of projectId -> array of messages
+  addAgentMessage: (projectId, msg) => set((state) => ({ 
+    agentMessages: {
+      ...state.agentMessages,
+      [projectId]: [...(state.agentMessages[projectId] || []), msg]
+    } 
   })),
-  clearAgentMessages: () => set({ agentMessages: [] }),
+  clearAgentMessages: (projectId) => set((state) => ({ 
+    agentMessages: {
+      ...state.agentMessages,
+      [projectId]: []
+    }
+  })),
 
   pipelineProgress: 0,
   setPipelineProgress: (val) => set({ pipelineProgress: val }),
 
-  currentStage: null,
-  setCurrentStage: (stage) => set({ currentStage: stage }),
+  currentStage: {}, // Map of projectId -> currentStage
+  setCurrentStage: (projectId, stage) => set((state) => ({ 
+    currentStage: { ...state.currentStage, [projectId]: stage } 
+  })),
 
   activeTab: 'graph',
   setActiveTab: (tab) => set({ activeTab: tab }),
@@ -92,7 +105,18 @@ const useStore = create((set) => ({
   projectNarratives: {},
   setProjectNarrative: (projectId, narrative) => set((state) => ({
     projectNarratives: { ...state.projectNarratives, [projectId]: narrative }
-  }))
+  })),
+}), {
+  name: 'nexora-storage',
+  storage: createJSONStorage(() => localStorage),
+  // Only persist history and messages, not ephemeral UI state
+  partialize: (state) => ({ 
+    chatHistory: state.chatHistory, 
+    agentMessages: state.agentMessages,
+    projectFindings: state.projectFindings,
+    projectNarratives: state.projectNarratives,
+    currentStage: state.currentStage
+  }),
 }));
 
 export default useStore;

@@ -16,6 +16,7 @@ export default function FindingsPanel() {
   const [loading, setLoading] = useState(false);
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [error, setError] = useState(null);
+  const [isAnomaliesCollapsed, setIsAnomaliesCollapsed] = useState(false);
 
   useEffect(() => {
     if (activeProject && !projectFindings[activeProject.id]) {
@@ -31,7 +32,6 @@ export default function FindingsPanel() {
         api.get(`/api/projects/${activeProject.id}`)
       ]);
       setProjectFindings(activeProject.id, findRes.data);
-      // Backend should store narrative in project record or findings table. Right now, narrative is generated on demand.
     } catch (err) {
       console.error(err);
       setError("Failed to load findings.");
@@ -55,20 +55,37 @@ export default function FindingsPanel() {
   if (!activeProject) return null;
 
   return (
-    <div className="flex w-full h-full bg-[#0a0a0a] overflow-hidden">
+    <div className="flex flex-col lg:flex-row w-full h-full bg-[#0a0a0a] overflow-y-auto lg:overflow-hidden relative">
       {/* LEFT COL: RAW PATTERN FINDINGS LIST */}
-      <div className="w-[45%] h-full border-r border-border flex flex-col">
+      <div className={`
+        ${isAnomaliesCollapsed ? 'lg:w-16' : 'w-full lg:w-[45%]'} 
+        h-full lg:max-h-none max-h-[50vh] border-b lg:border-b-0 lg:border-r border-border flex flex-col transition-all duration-300 overflow-hidden shrink-0
+      `}>
         <div className="p-5 border-b border-border bg-surface shrink-0 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <ShieldAlert size={20} className="text-red-400" /> Detected Anomalies
-          </h2>
-          <button onClick={fetchData} className="p-1.5 text-muted hover:text-white rounded-md bg-white/5 transition-colors">
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          </button>
+          {!isAnomaliesCollapsed && (
+            <h2 className="text-lg font-bold text-white flex items-center gap-2 truncate">
+              <ShieldAlert size={20} className="text-red-400 shrink-0" /> <span>Detected Anomalies</span>
+            </h2>
+          )}
+          <div className="flex items-center gap-2 ml-auto">
+            {!isAnomaliesCollapsed && (
+              <button onClick={fetchData} className="p-1.5 text-muted hover:text-white rounded-md bg-white/5 transition-colors">
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              </button>
+            )}
+            <button 
+              onClick={() => setIsAnomaliesCollapsed(!isAnomaliesCollapsed)} 
+              className="p-1.5 text-accent hover:text-white rounded-md bg-accent/10 transition-colors"
+              title={isAnomaliesCollapsed ? "Expand Panel" : "Collapse Panel"}
+            >
+              <RefreshCw size={14} className={isAnomaliesCollapsed ? "" : "rotate-180"} />
+            </button>
+          </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {loading ? (
+        {!isAnomaliesCollapsed && (
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {loading ? (
             <div className="text-muted flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading findings...</div>
           ) : findings.length === 0 ? (
             <div className="text-center p-8 bg-surface border border-border rounded-xl text-muted">
@@ -98,6 +115,7 @@ export default function FindingsPanel() {
             ))
           )}
         </div>
+        )}
       </div>
 
       {/* RIGHT COL: JOURNALIST NARRATIVE DRAFT */}
@@ -118,26 +136,25 @@ export default function FindingsPanel() {
           </button>
         </div>
 
-        <div className="flex-1 p-8 overflow-y-auto font-serif text-lg leading-relaxed text-gray-200">
+        <div className="flex-1 p-5 md:p-8 overflow-y-auto font-serif text-base md:text-lg leading-relaxed text-gray-200">
           {error && <div className="p-4 bg-red-500/10 text-red-400 rounded-lg border border-red-500/30 mb-6 text-sm">{error}</div>}
           
           {generatingDraft ? (
-             <div className="h-full flex flex-col items-center justify-center text-muted font-sans space-y-4">
+             <div className="h-full flex flex-col items-center justify-center text-muted font-sans space-y-4 py-10">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-accent/20 rounded-full"></div>
                   <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin absolute inset-0"></div>
                 </div>
-                <p>LLaMA 3.1 70B is analyzing findings and structuring the draft narrative...</p>
+                <p className="text-sm text-center px-4">LLaMA 3.3 70B is analyzing findings and structuring the draft narrative...</p>
              </div>
           ) : narrative ? (
             <div className="prose prose-invert prose-yellow max-w-none">
-               {/* Extremely simple markdown parser for bold/italics could go here, or just whitespace-pre-wrap */}
                <div className="whitespace-pre-wrap">{narrative}</div>
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-muted font-sans text-center max-w-sm mx-auto opacity-60">
+            <div className="h-full flex flex-col items-center justify-center text-muted font-sans text-center max-w-sm mx-auto opacity-60 py-10">
               <FileText size={48} className="mb-4 text-accent drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-              <p>Click "Generate Draft" to compile all extracted evidence and anomalies into a structured investigative article.</p>
+              <p className="text-sm">Click "Generate Draft" to compile all extracted evidence and anomalies into a structured investigative article.</p>
             </div>
           )}
         </div>

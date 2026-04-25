@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import useStore from '../store/useStore';
-import { Cpu, Terminal, ShieldAlert } from 'lucide-react';
+import { Cpu, Terminal, ShieldAlert, X } from 'lucide-react';
 import useSSE from '../hooks/useSSE';
 
-export default function AgentStatus() {
+export default function AgentStatus({ onClose }) {
   const activeProject = useStore((state) => state.activeProject);
-  const agentMessages = useStore((state) => state.agentMessages);
-  const currentStage = useStore((state) => state.currentStage);
+  const allMessages = useStore((state) => state.agentMessages);
+  const allStages = useStore((state) => state.currentStage);
   const pipelineProgress = useStore((state) => state.pipelineProgress);
+
+  const agentMessages = activeProject ? (allMessages[activeProject.id] || []) : [];
+  const currentStage = activeProject ? (allStages[activeProject.id] || '') : '';
   
   const endOfMessagesRef = useRef(null);
 
@@ -23,11 +26,27 @@ export default function AgentStatus() {
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* HEADER & PROGRESS */}
-      <div className="p-4 border-b border-border bg-surface shrink-0">
-        <h3 className="font-bold text-accent flex items-center gap-2 mb-3">
-          <Terminal size={18} />
-          Terminal Output
-        </h3>
+      <div className="p-4 border-b border-border bg-surface shrink-0 flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-accent flex items-center gap-2 mb-1">
+            <Terminal size={18} />
+            Terminal Output
+          </h3>
+          <p className="text-[10px] text-muted uppercase tracking-widest font-bold">Real-time Telemetry</p>
+        </div>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-white/5 rounded-full text-muted hover:text-white transition-colors"
+            title="Close Terminal"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+      
+      {/* PROGRESS BAR */}
+      <div className="px-4 py-3 bg-black/20 border-b border-border">
         <div className="space-y-1">
           <div className="flex justify-between text-xs font-semibold">
             <span className="text-white capitalize">{currentStage || 'Initializing Pipeline...'}</span>
@@ -47,7 +66,11 @@ export default function AgentStatus() {
         {agentMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted flex-col opacity-50">
             <Cpu size={32} className="mb-2" />
-            <span>Awaiting telemetry...</span>
+            {activeProject.status === 'complete' ? (
+              <span className="text-center px-4">Investigation logs archived. Pipeline summary available in Findings tab.</span>
+            ) : (
+              <span>Awaiting telemetry...</span>
+            )}
           </div>
         ) : (
           agentMessages.map((msg, i) => (

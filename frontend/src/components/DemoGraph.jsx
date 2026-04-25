@@ -34,34 +34,33 @@ export default function DemoGraph() {
     
     // Set proper canvas resolution for retina displays
     const dpr = window.devicePixelRatio || 1;
+    // Positioning logic (calculates relative to current cw/ch)
+    const positionNodes = (width, height) => {
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.min(width, height) * 0.35;
+      
+      nodesData.forEach((node, i) => {
+        const angle = (i / nodesData.length) * Math.PI * 2 - Math.PI/2;
+        node.x = cx + Math.cos(angle) * radius;
+        node.y = cy + Math.sin(angle) * (radius * 0.8);
+        node.score = [1,2,7].includes(node.id) ? 8 : 2; 
+      });
+    };
+
     const updateSize = () => {
       const rect = canvas.parentElement.getBoundingClientRect();
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       ctx.scale(dpr, dpr);
+      positionNodes(rect.width, rect.height);
     };
     updateSize();
     window.addEventListener('resize', updateSize);
 
-    // Initial positioning simulation (very basic force layout pre-calc)
-    const cw = canvas.width / dpr;
-    const ch = canvas.height / dpr;
-    const cx = cw / 2;
-    const cy = ch / 2;
-    const radius = Math.min(cw, ch) * 0.35;
-    
     const activeNodes = [];
     const activeLinks = [];
     
-    nodesData.forEach((node, i) => {
-      const angle = (i / nodesData.length) * Math.PI * 2 - Math.PI/2;
-      node.x = cx + Math.cos(angle) * radius;
-      node.y = cy + Math.sin(angle) * (radius * 0.8);
-      // Give node 1 and 2 a bit more suspicion size
-      node.score = [1,2,7].includes(node.id) ? 8 : 2; 
-    });
-
-    // Theme Colors
     const colors = {
       person: '#facc15',
       organization: '#60a5fa',
@@ -79,8 +78,19 @@ export default function DemoGraph() {
 
     const draw = () => {
       time += 0.05;
-      const rect = canvas.parentElement.getBoundingClientRect();
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      const cw = canvas.width / dpr;
+      const ch = canvas.height / dpr;
+      const cx = cw / 2;
+      const cy = ch / 2;
+      ctx.clearRect(0, 0, cw, ch);
+
+      // Recalculate positions if size changed (simple way to keep it centered)
+      const radius = Math.min(cw, ch) * 0.35;
+      nodesData.forEach((node, i) => {
+        const angle = (i / nodesData.length) * Math.PI * 2 - Math.PI/2;
+        node.x = cx + Math.cos(angle) * radius;
+        node.y = cy + Math.sin(angle) * (radius * 0.8);
+      });
 
       // Draw Links
       activeLinks.forEach(link => {

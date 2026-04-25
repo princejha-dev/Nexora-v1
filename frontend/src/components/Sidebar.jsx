@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, FolderOpen, LogOut, ChevronRight } from 'lucide-react';
+import { Search, Plus, FolderOpen, LogOut, X } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useStore from '../store/useStore';
 import api from '../lib/api';
 
-export default function Sidebar({ onNewProject }) {
+export default function Sidebar({ onNewProject, onClose }) {
   const { user, logout } = useAuth();
   const projects = useStore((state) => state.projects);
   const setProjects = useStore((state) => state.setProjects);
@@ -48,6 +48,14 @@ export default function Sidebar({ onNewProject }) {
         <span className="text-xl font-bold tracking-tight text-white">
           Nexora AI
         </span>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="md:hidden ml-auto p-2 hover:bg-white/5 rounded-lg text-muted"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* NEW PROJECT BUTTON */}

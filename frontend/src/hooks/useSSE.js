@@ -63,12 +63,12 @@ export default function useSSE(projectId) {
             break;
             
           case 'status':
-            if (msg.stage) setCurrentStage(msg.stage);
-            if (msg.message) addAgentMessage({ agent: 'system', message: msg.message, timestamp: new Date() });
+            if (msg.stage) setCurrentStage(projectId, msg.stage);
+            if (msg.message) addAgentMessage(projectId, { agent: 'system', message: msg.message, timestamp: new Date() });
             break;
             
           case 'message':
-            addAgentMessage({ agent: msg.agent, message: msg.message, timestamp: new Date() });
+            addAgentMessage(projectId, { agent: msg.agent, message: msg.message, timestamp: new Date() });
             break;
             
           case 'node':
@@ -92,7 +92,7 @@ export default function useSSE(projectId) {
             break;
 
           case 'alert':
-            addAgentMessage({ 
+            addAgentMessage(projectId, { 
               agent: 'pattern', 
               message: `ALERT: ${msg.pattern} - ${msg.description}`, 
               isAlert: true,
@@ -102,13 +102,13 @@ export default function useSSE(projectId) {
 
           case 'complete':
             fetchProjects(); // refresh projects to show complete state
-            setCurrentStage('Verification Complete');
+            setCurrentStage(projectId, 'Verification Complete');
             setPipelineProgress(100);
-            if (msg.message) addAgentMessage({ agent: 'system', message: msg.message, timestamp: new Date() });
+            if (msg.message) addAgentMessage(projectId, { agent: 'system', message: msg.message, timestamp: new Date() });
             break;
 
           case 'error':
-            addAgentMessage({ 
+            addAgentMessage(projectId, { 
               agent: 'system', 
               message: `ERROR: ${msg.message}`, 
               isAlert: true,
