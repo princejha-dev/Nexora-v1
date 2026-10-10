@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # llama-3.3-70b-versatile for structured JSON output
 _llm = ChatGroq(
-    model_name="llama-3.3-70b-versatile",
+    model_name="openai/gpt-oss-120b",
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
     max_tokens=512,
