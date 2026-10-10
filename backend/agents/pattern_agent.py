@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Callable, Optional
 
 from langchain_groq import ChatGroq
@@ -16,7 +17,6 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.3,
     max_tokens=4096,
-    model_kwargs={"response_format": {"type": "json_object"}}
 )
 
 _pattern_prompt = ChatPromptTemplate.from_messages([
@@ -50,28 +50,46 @@ Score genuinely suspicious patterns higher. No markdown, no explanation."""),
 _pattern_chain = _pattern_prompt | _llm
 
 
+def _clean_json_response(content: str) -> str:
+    """Normalize model output to a parseable JSON object."""
+    text = (content or "").strip()
+    if not text:
+        raise ValueError("Empty response from model")
+
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
+
+    return text
+
+
 async def analyze(entities: list[dict], relationships: list[dict]) -> list[dict]:
     """Detect suspicious patterns in the entity graph."""
+    response = None
     try:
         response = await _pattern_chain.ainvoke({
             "entities": json.dumps(entities, indent=2),
             "relationships": json.dumps(relationships, indent=2),
         })
 
-        content = response.content.strip()
-        if content.startswith("```"):
-            content = content.split("\n", 1)[1].rsplit("```", 1)[0]
-
+        content = _clean_json_response(response.content)
         result = json.loads(content)
         findings = result.get("findings", [])
-        logger.info(f"Pattern agent found {len(findings)} suspicious patterns")
+        logger.info("Pattern agent found %s suspicious patterns", len(findings))
         return findings
 
-    except json.JSONDecodeError:
-        logger.warning("Pattern agent returned non-JSON output")
+    except json.JSONDecodeError as exc:
+        logger.warning("Pattern agent returned non-JSON output: %s", exc)
+        if response is not None:
+            logger.debug("Raw model output: %s", response.content)
         return []
     except Exception as e:
-        logger.error(f"Pattern agent error: {e}")
+        logger.error("Pattern agent error: %s", e)
         return []
 
 
