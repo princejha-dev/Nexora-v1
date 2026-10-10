@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Callable, Optional
 
 from langchain_groq import ChatGroq
@@ -40,6 +41,24 @@ Be conservative — only mark verified if evidence clearly supports it."""),
 _verify_chain = _verify_prompt | _llm
 
 
+def _clean_json_response(content: str) -> str:
+    """Normalize model output to a parseable JSON object."""
+    text = (content or "").strip()
+    if not text:
+        raise ValueError("Empty response from model")
+
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
+
+    return text
+
+
 async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
     """Verify a single finding against retrieved document chunks."""
     try:
@@ -53,10 +72,7 @@ async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
             "evidence": evidence_text,
         })
 
-        content = response.content.strip()
-        if content.startswith("```"):
-            content = content.split("\n", 1)[1].rsplit("```", 1)[0]
-
+        content = _clean_json_response(response.content)
         verification = json.loads(content)
 
         return {
@@ -68,11 +84,12 @@ async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
             "legal_risk": verification.get("legal_risk", "low"),
         }
 
-    except json.JSONDecodeError:
-        logger.warning(f"Factcheck JSON parse error for: {finding.get('title')}")
+    except json.JSONDecodeError as exc:
+        logger.warning("Factcheck JSON parse error for: %s | %s", finding.get("title"), exc)
+        logger.debug("Raw model output: %s", getattr(response, "content", ""))
         return {**finding, "verified": False, "confidence": "low"}
     except Exception as e:
-        logger.error(f"Factcheck error: {e}")
+        logger.error("Factcheck error: %s", e)
         return {**finding, "verified": False, "confidence": "low"}
 
 
