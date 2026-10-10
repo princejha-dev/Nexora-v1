@@ -19,31 +19,23 @@ _llm = ChatGroq(
     max_tokens=2048,
 )
 
+_JSON_SCHEMA = '''{"entities": [{"name": "...", "type": "person|organization|location|financial|date|event", "description": "brief desc", "aliases": []}], "relationships": [{"entity_a": "...", "entity_b": "...", "label": "relationship description", "confidence": 0.8}]}'''
+
 _extract_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are an entity extraction expert for investigative journalism.
 Extract ALL named entities and relationships from the text.
 
 Entity types: person, organization, location, financial, date, event
 
-Return ONLY valid JSON object with no markdown fences and no commentary.
-Use this exact schema:
-{
-  "entities": [
-    {"name": "...", "type": "person|organization|location|financial|date|event", "description": "brief desc", "aliases": ["..."]}
-  ],
-  "relationships": [
-    {"entity_a": "...", "entity_b": "...", "label": "relationship description", "confidence": 0.8}
-  ]
-}
+Return ONLY valid JSON matching this schema:
+{schema}
 
 Rules:
 - Be thorough — extract every entity mentioned.
-- Only output valid JSON, with double quotes around all keys and string values.
-- Do not include markdown fences, explanations, or trailing commas.
-- The JSON must be parseable by Python's json.loads().
-- Use numbers for confidence values, not strings.
+- Return only valid JSON with double quotes.
+- No markdown, no commentary.
 - Use the exact allowed type values only.
-- If there are no entities, return {"entities": [], "relationships": []}."""),
+- If there are no entities, return {{"entities": [], "relationships": []}}."""),
     ("human", "Extract entities and relationships from:\n\n{text}")
 ])
 
@@ -56,10 +48,12 @@ def _clean_json_response(content: str) -> str:
     if not text:
         raise ValueError("Empty response from model")
 
+    # Remove markdown fences such as ```json ... ```
     fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
     if fenced:
         text = fenced.group(1).strip()
 
+    # If the model adds extra explanatory text before/after the JSON, keep only the first JSON object
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1 and end > start:
@@ -71,7 +65,7 @@ def _clean_json_response(content: str) -> str:
 async def extract_from_batch(text: str) -> dict:
     """Extract entities and relations from a text batch."""
     try:
-        response = await _extract_chain.ainvoke({"text": text})
+        response = await _extract_chain.ainvoke({"text": text, "schema": _JSON_SCHEMA})
         content = _clean_json_response(response.content)
         result = json.loads(content)
         return {

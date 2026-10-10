@@ -19,6 +19,8 @@ _llm = ChatGroq(
     max_tokens=4096,
 )
 
+_PATTERN_SCHEMA = '''{"findings": [{"title": "short title", "description": "detailed explanation", "pattern_type": "one of the types above", "suspicion_score": 1-10, "entities_involved": ["entity names"], "legal_risk": "low|medium|high"}]}'''
+
 _pattern_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are an investigative analyst detecting suspicious patterns.
 Analyze the entity graph for these pattern types:
@@ -29,21 +31,13 @@ Analyze the entity graph for these pattern types:
 - geographic_anomaly: offshore entities with local directors
 - recurring_actor: same professional in multiple suspicious deals
 
-Return ONLY valid JSON:
-{{
-  "findings": [
-    {{
-      "title": "short title",
-      "description": "detailed explanation",
-      "pattern_type": "one of the types above",
-      "suspicion_score": 1-10,
-      "entities_involved": ["entity names"],
-      "legal_risk": "low|medium|high"
-    }}
-  ]
-}}
+Return ONLY valid JSON matching this schema:
+{schema}
 
-Score genuinely suspicious patterns higher. No markdown, no explanation."""),
+Rules:
+- Score genuinely suspicious patterns higher.
+- Return only valid JSON with double quotes.
+- No markdown, no explanation."""),
     ("human", "Analyze this entity graph for suspicious patterns:\n\nENTITIES:\n{entities}\n\nRELATIONSHIPS:\n{relationships}")
 ])
 
@@ -75,6 +69,7 @@ async def analyze(entities: list[dict], relationships: list[dict]) -> list[dict]
         response = await _pattern_chain.ainvoke({
             "entities": json.dumps(entities, indent=2),
             "relationships": json.dumps(relationships, indent=2),
+            "schema": _PATTERN_SCHEMA,
         })
 
         content = _clean_json_response(response.content)

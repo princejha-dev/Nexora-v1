@@ -24,21 +24,19 @@ _verify_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a fact-checking editor for investigative journalism.
 Given a finding and source document evidence, verify the finding.
 
-Return ONLY valid JSON:
-{{
-  "verified": true/false,
-  "confidence": "high|medium|low",
-  "supporting_evidence": "quote or reference from documents",
-  "gaps": "what information is missing",
-  "legal_risk": "low|medium|high",
-  "assessment": "brief explanation"
-}}
+Return ONLY valid JSON matching this schema:
+{schema}
 
-Be conservative — only mark verified if evidence clearly supports it."""),
+Rules:
+- Be conservative — only mark verified if evidence clearly supports it.
+- Return only valid JSON with double quotes.
+- No markdown, no explanation."""),
     ("human", "FINDING TO VERIFY:\n{finding}\n\nSOURCE DOCUMENT EVIDENCE:\n{evidence}")
 ])
 
 _verify_chain = _verify_prompt | _llm
+
+_VERIFY_SCHEMA = '''{"verified": true/false, "confidence": "high|medium|low", "supporting_evidence": "quote or reference from documents", "gaps": "what information is missing", "legal_risk": "low|medium|high", "assessment": "brief explanation"}'''
 
 
 def _clean_json_response(content: str) -> str:
@@ -71,6 +69,7 @@ async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
         response = await _verify_chain.ainvoke({
             "finding": json.dumps(finding),
             "evidence": evidence_text,
+            "schema": _VERIFY_SCHEMA,
         })
 
         content = _clean_json_response(response.content)
