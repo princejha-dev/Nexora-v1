@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Callable, Optional
 
 from langchain_groq import ChatGroq
@@ -16,7 +17,6 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
     max_tokens=2048,
-    model_kwargs={"response_format": {"type": "json_object"}}
 )
 
 _extract_prompt = ChatPromptTemplate.from_messages([
@@ -25,40 +25,65 @@ Extract ALL named entities and relationships from the text.
 
 Entity types: person, organization, location, financial, date, event
 
-Return ONLY valid JSON:
-{{
+Return ONLY valid JSON object with no markdown fences and no commentary.
+Use this exact schema:
+{
   "entities": [
-    {{"name": "...", "type": "person|organization|location|financial|date|event", "description": "brief desc", "aliases": []}}
+    {"name": "...", "type": "person|organization|location|financial|date|event", "description": "brief desc", "aliases": ["..."]}
   ],
   "relationships": [
-    {{"entity_a": "...", "entity_b": "...", "label": "relationship description", "confidence": 0.8}}
+    {"entity_a": "...", "entity_b": "...", "label": "relationship description", "confidence": 0.8}
   ]
-}}
+}
 
-Be thorough — extract every entity mentioned. No markdown, no explanation."""),
+Rules:
+- Be thorough — extract every entity mentioned.
+- Only output valid JSON, with double quotes around all keys and string values.
+- Do not include markdown fences, explanations, or trailing commas.
+- The JSON must be parseable by Python's json.loads().
+- Use numbers for confidence values, not strings.
+- Use the exact allowed type values only.
+- If there are no entities, return {"entities": [], "relationships": []}."""),
     ("human", "Extract entities and relationships from:\n\n{text}")
 ])
 
 _extract_chain = _extract_prompt | _llm
 
 
+def _clean_json_response(content: str) -> str:
+    """Normalize LLM JSON output into a parseable object string."""
+    text = (content or "").strip()
+    if not text:
+        raise ValueError("Empty response from model")
+
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
+
+    return text
+
+
 async def extract_from_batch(text: str) -> dict:
     """Extract entities and relations from a text batch."""
     try:
         response = await _extract_chain.ainvoke({"text": text})
-        content = response.content.strip()
-        if content.startswith("```"):
-            content = content.split("\n", 1)[1].rsplit("```", 1)[0]
+        content = _clean_json_response(response.content)
         result = json.loads(content)
         return {
             "entities": result.get("entities", []),
             "relationships": result.get("relationships", []),
         }
-    except json.JSONDecodeError:
-        logger.warning("Entity extraction JSON parse error")
+    except json.JSONDecodeError as exc:
+        logger.warning("Entity extraction JSON parse error: %s", exc)
+        logger.debug("Raw model output: %s", getattr(response, "content", ""))
         return {"entities": [], "relationships": []}
     except Exception as e:
-        logger.error(f"Entity extraction error: {e}")
+        logger.error("Entity extraction error: %s", e)
         return {"entities": [], "relationships": []}
 
 
@@ -66,7 +91,11 @@ def _deduplicate_entities(entities: list[dict]) -> list[dict]:
     """Deduplicate entities by normalized name."""
     seen = {}
     for entity in entities:
-        key = entity["name"].lower().strip()
+        name = (entity.get("name") or "").strip()
+        if not name:
+            continue
+
+        key = name.lower()
         if key in seen:
             existing = seen[key]
             existing["mention_count"] = existing.get("mention_count", 1) + 1
