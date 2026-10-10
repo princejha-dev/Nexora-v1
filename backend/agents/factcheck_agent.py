@@ -61,6 +61,7 @@ def _clean_json_response(content: str) -> str:
 
 async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
     """Verify a single finding against retrieved document chunks."""
+    response = None
     try:
         evidence_text = "\n\n---\n\n".join([
             f"[Similarity: {c.get('similarity', 'N/A'):.3f}]\n{c['content']}"
@@ -86,7 +87,8 @@ async def verify_finding(finding: dict, evidence_chunks: list[dict]) -> dict:
 
     except json.JSONDecodeError as exc:
         logger.warning("Factcheck JSON parse error for: %s | %s", finding.get("title"), exc)
-        logger.debug("Raw model output: %s", getattr(response, "content", ""))
+        if response is not None:
+            logger.debug("Raw model output: %s", response.content)
         return {**finding, "verified": False, "confidence": "low"}
     except Exception as e:
         logger.error("Factcheck error: %s", e)
