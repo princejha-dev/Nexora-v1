@@ -1,4 +1,5 @@
 import asyncio
+import json
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
@@ -21,12 +22,17 @@ def test_chat_endpoint():
         
         # Mock project check
         mock_execute = MagicMock()
-        mock_execute.execute.return_value = MagicMock(data=[{"id": "test_proj"}])
+        mock_execute.execute.return_value = MagicMock(data={"id": "test_proj", "name": "Test Project", "description": "Test Desc"})
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.single.return_value = mock_execute
         
+        # Mock entities & findings queries
+        mock_list_execute = MagicMock()
+        mock_list_execute.execute.return_value = MagicMock(data=[])
+        mock_supabase.table.return_value.select.return_value.eq.return_value.limit.return_value = mock_list_execute
+
         # Mock similarity search
         async def mock_sim_search(*args, **kwargs):
-            return [{"content": "This is test context from document.", "metadata": {}}]
+            return [{"content": "This is test context from document.", "chunk_index": 1, "similarity": 0.95}]
         mock_search.side_effect = mock_sim_search
         
         # Mock ChatGroq to yield chunks
@@ -47,7 +53,7 @@ def test_chat_endpoint():
         print("Sending request to /api/chat/test_proj...")
         response = client.post(
             "/api/chat/test_proj",
-            json={"message": "What is this?"}
+            json={"message": "What is this?", "history": []}
         )
         
         assert response.status_code == 200
@@ -59,11 +65,17 @@ def test_chat_endpoint():
         
         full_text = ""
         for event in lines:
-            if event.startswith("data: "):
-                data = event[6:]
-                if data == "[DONE]":
-                    break
-                full_text += data
+            for line in event.split("\n"):
+                if line.startswith("data: "):
+                    data = line[6:]
+                    try:
+                        parsed = json.loads(data)
+                        token = parsed.get("content", "")
+                    except Exception:
+                        token = data
+                    if token == "[DONE]":
+                        break
+                    full_text += token
                 
         print(f"Reconstructed message: '{full_text}'")
         assert full_text == "Hello world! This is a test.", f"Expected 'Hello world! This is a test.', got '{full_text}'"

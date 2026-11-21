@@ -29,7 +29,7 @@
 
 - **Frontend**: React, Zustand (State Management), Force-Graph-2D (Visualization), Tailwind CSS.
 - **Backend**: FastAPI (Python), LangChain (Agent Orchestration), Pydantic.
-- **LLMs**: Groq (Llama 3.3 70B for extraction/reasoning), Google Gemini (Embeddings).
+- **LLMs**: Groq (OpenAI GPT-OSS 120B for extraction/reasoning), Google Gemini (Embeddings).
 - **Database**: Supabase (PostgreSQL + Vector Store).
 - **Deployment**: Render (Backend), Vercel (Frontend).
 

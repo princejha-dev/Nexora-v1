@@ -10,37 +10,49 @@ jobs:
   backend-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+
     - name: Install dependencies
       run: |
         cd backend
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+
     - name: Run tests
+      env:
+        GROQ_API_KEY: "test_groq_key"
+        GOOGLE_API_KEY: "test_google_key"
+        SUPABASE_URL: "https://mock.supabase.co"
+        SUPABASE_SERVICE_KEY: "test_service_key"
+        SUPABASE_ANON_KEY: "test_anon_key"
+        JWT_SECRET: "test_jwt_secret"
       run: |
         cd backend
-        # We'll create test_main.py shortly
-        pytest tests/
+        pytest tests/ test_chat.py
 
   frontend-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
+
     - name: Install dependencies
       run: |
         cd frontend
         npm install
+
     - name: Build frontend
       run: |
         cd frontend
         npm run build
       env:
-        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:8000' }}

@@ -17,6 +17,7 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.3,
     max_tokens=4096,
+    model_kwargs={"reasoning_format": "hidden"},
 )
 
 _PATTERN_SCHEMA = '''{"findings": [{"title": "short title", "description": "detailed explanation", "pattern_type": "one of the types above", "suspicion_score": 1-10, "entities_involved": ["entity names"], "legal_risk": "low|medium|high"}]}'''

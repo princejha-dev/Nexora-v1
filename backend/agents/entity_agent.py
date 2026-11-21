@@ -16,7 +16,8 @@ _llm = ChatGroq(
     model_name="openai/gpt-oss-120b",
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
-    max_tokens=2048,
+    max_tokens=4096,
+    model_kwargs={"reasoning_format": "hidden"},
 )
 
 _JSON_SCHEMA = '''{"entities": [{"name": "...", "type": "person|organization|location|financial|date|event", "description": "brief desc", "aliases": []}], "relationships": [{"entity_a": "...", "entity_b": "...", "label": "relationship description", "confidence": 0.8}]}'''

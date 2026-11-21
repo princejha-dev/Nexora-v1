@@ -7,7 +7,7 @@ FastAPI backend powering the Nexora investigative journalism platform. Runs a 6-
 | Component | Technology | Why |
 |-----------|-----------|-----|
 | Framework | FastAPI | Async support, auto-docs, Pydantic validation |
-| LLM | Groq (Llama 3.3 70B) | State-of-the-art reasoning, ultra-low latency |
+| LLM | Groq (OpenAI GPT-OSS 120B) | High-throughput open-weight MoE reasoning, ultra-low latency (~500 tps) |
 | Embeddings | Google Gemini (text-embedding-004) | High dimensionality (768), semantic accuracy |
 | Database | Supabase PostgreSQL + pgvector | Scalable vector search, free tier |
 | Orchestration | LangChain | Robust agent chains and structured output |
@@ -67,7 +67,7 @@ backend/
 
 | Variable | Description |
 |----------|-------------|
-| `GROQ_API_KEY` | Key for Llama 3.3 70B reasoning |
+| `GROQ_API_KEY` | Key for OpenAI GPT-OSS 120B reasoning on Groq |
 | `GOOGLE_API_KEY` | Key for Gemini Embeddings |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | Supabase service role key |

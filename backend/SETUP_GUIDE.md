@@ -65,12 +65,12 @@ python -c "from core.embedder import embed_query; v = embed_query('test'); print
 ```
 Expected output: `OK: 768 dimensions`
 
-### 4.2 Test Groq LLM (Llama 3.3 70B)
+### 4.2 Test Groq LLM (OpenAI GPT-OSS 120B)
 ```bash
 python -c "
 from langchain_groq import ChatGroq
 from config import get_settings
-llm = ChatGroq(model_name='llama-3.3-70b-versatile', api_key=get_settings().GROQ_API_KEY)
+llm = ChatGroq(model_name='openai/gpt-oss-120b', api_key=get_settings().GROQ_API_KEY, model_kwargs={'reasoning_format': 'hidden'})
 r = llm.invoke('Hello')
 print('Groq OK:', r.content)
 "

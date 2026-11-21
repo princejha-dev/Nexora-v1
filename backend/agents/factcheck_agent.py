@@ -14,10 +14,11 @@ from core.embedder import similarity_search
 logger = logging.getLogger(__name__)
 
 _llm = ChatGroq(
-    model_name="openai/gpt-oss-20b",
+    model_name="openai/gpt-oss-120b",
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
-    max_tokens=1024,
+    max_tokens=2048,
+    model_kwargs={"reasoning_format": "hidden"},
 )
 
 _verify_prompt = ChatPromptTemplate.from_messages([

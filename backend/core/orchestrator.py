@@ -220,7 +220,7 @@ async def run_pipeline(
         await _update_project_status(project_id, "drafting")
         await safe_emit("progress", {"percent": 90})
 
-        story = await narrative_agent.run(verified_findings, entities, project_description, emit=safe_emit)
+        story = await narrative_agent.run(entities=entities, findings=verified_findings, context=project_description, emit=safe_emit)
 
         # Save story draft
         try:

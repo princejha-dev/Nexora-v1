@@ -38,6 +38,15 @@ export default function ChatPanel() {
     // We'll track the concatenated text here so we can update the store
     let currentResponse = '';
     
+    // Include recent chat history to support contextual follow-ups
+    const recentHistory = messages
+      .filter((m) => m.content && m.content.trim())
+      .slice(-6)
+      .map((m) => ({
+        role: m.role,
+        content: m.content
+      }));
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
@@ -48,7 +57,10 @@ export default function ChatPanel() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ message: currentInput })
+          body: JSON.stringify({
+            message: currentInput,
+            history: recentHistory
+          })
         }
       );
 
@@ -57,6 +69,7 @@ export default function ChatPanel() {
       const decoder = new TextDecoder();
       
       let firstChunkReceived = false;
+      let buffer = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -66,17 +79,27 @@ export default function ChatPanel() {
           setLoading(false);
         }
         
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.substring(6);
-            if (data.trim() === '[DONE]') break;
-            
-            // Append each chunk to last message
-            currentResponse += data;
-            updateLastMessage(activeProject.id, currentResponse);
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop(); // Retain partial/incomplete event
+
+        for (const event of events) {
+          const lines = event.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const rawData = line.substring(6);
+              let tokenText = '';
+              try {
+                const parsed = JSON.parse(rawData);
+                tokenText = parsed.content !== undefined ? parsed.content : rawData;
+              } catch {
+                tokenText = rawData;
+              }
+
+              if (tokenText === '[DONE]') break;
+              currentResponse += tokenText;
+              updateLastMessage(activeProject.id, currentResponse);
+            }
           }
         }
       }
