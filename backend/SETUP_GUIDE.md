@@ -70,7 +70,7 @@ Expected output: `OK: 768 dimensions`
 python -c "
 from langchain_groq import ChatGroq
 from config import get_settings
-llm = ChatGroq(model_name='openai/gpt-oss-120b', api_key=get_settings().GROQ_API_KEY, model_kwargs={'reasoning_format': 'hidden'})
+llm = ChatGroq(model_name='openai/gpt-oss-120b', api_key=get_settings().GROQ_API_KEY, reasoning_format='hidden')
 r = llm.invoke('Hello')
 print('Groq OK:', r.content)
 "

@@ -17,7 +17,7 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
     max_tokens=2048,
-    model_kwargs={"reasoning_format": "hidden"},
+    reasoning_format="hidden",
 )
 
 _CLASSIFY_SCHEMA = '''{"document_type": "financial_record|legal_filing|corporate_registration|correspondence|report|news_article|other", "time_period": "estimated date range mentioned", "jurisdiction": "country/region if identifiable", "key_topic": "one-sentence summary", "entities_hint": ["likely entity names spotted"]}'''

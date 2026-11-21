@@ -16,7 +16,7 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.4,
     max_tokens=4096,
-    model_kwargs={"reasoning_format": "hidden"},
+    reasoning_format="hidden",
 )
 
 _narrative_prompt = ChatPromptTemplate.from_messages([

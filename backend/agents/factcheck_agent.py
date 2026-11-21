@@ -18,7 +18,7 @@ _llm = ChatGroq(
     api_key=get_settings().GROQ_API_KEY,
     temperature=0.1,
     max_tokens=2048,
-    model_kwargs={"reasoning_format": "hidden"},
+    reasoning_format="hidden",
 )
 
 _verify_prompt = ChatPromptTemplate.from_messages([
