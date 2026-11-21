@@ -124,8 +124,10 @@ GUIDELINES:
             yield f"data: {json.dumps({'content': '[DONE]'})}\n\n"
         except Exception as e:
             logger.error(f"Chat streaming error: {e}")
-            yield f"data: {json.dumps({'content': f'\\n\\n[Error: {str(e)}]' })}\n\n"
+            error_msg = f"\n\n[Error: {str(e)}]"
+            yield f"data: {json.dumps({'content': error_msg})}\n\n"
             yield f"data: {json.dumps({'content': '[DONE]'})}\n\n"
+            return
 
     return StreamingResponse(
         stream(),
